@@ -97,6 +97,13 @@ func main() {
 		},
 	).Methods("POST")
 
+	router.HandleFunc(
+		"/health",
+		func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(200)
+		},
+	).Methods("GET")
+
 	log.Print("starting")
 
 	http.ListenAndServe(":9766", router)
