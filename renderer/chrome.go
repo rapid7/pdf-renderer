@@ -213,17 +213,21 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 		for {
 			select {
 			case reply := <-requestWillBeSentChan:
-				log.Debug(fmt.Sprintf("Requested: %v", reply.Request.URL))
-				pendingRequests++
-				curAttempt = 0
+				if reply.Type.String() != "Document" {
+					log.Debug(fmt.Sprintf("Requested: %v", reply.Request.URL))
+					pendingRequests++
+					curAttempt = 0
+				}
 				break
 			case reply := <-responseReceivedChan:
-				if reply.Response.Status >= 400 {
-					log.Error(fmt.Sprintf("Status: %v, Received: %v", reply.Response.Status, reply.Response.URL))
-				} else {
-					log.Debug(fmt.Sprintf("Status: %v, Received: %v", reply.Response.Status, reply.Response.URL))
+				if reply.Type.String() != "Document" {
+					if reply.Response.Status >= 400 {
+						log.Error(fmt.Sprintf("Status: %v, Received: %v", reply.Response.Status, reply.Response.URL))
+					} else {
+						log.Debug(fmt.Sprintf("Status: %v, Received: %v", reply.Response.Status, reply.Response.URL))
+					}
+					pendingRequests--
 				}
-				pendingRequests--
 				break
 			default:
 				break ConsumeChannels

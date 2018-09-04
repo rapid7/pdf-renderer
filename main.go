@@ -76,6 +76,7 @@ func main() {
 			pdf, _ := storage.ReadFromFile(fileName)
 			if pdf != nil {
 				log.Info(fmt.Sprintf("Loading PDF using correlation id."))
+				w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
 				w.Write(pdf)
 			} else {
 				log.Info(fmt.Sprintf("Rendering: %v", form.TargetUrl))
@@ -87,6 +88,7 @@ func main() {
 
 					storage.WriteToFile(pdf, fileName)
 
+					w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
 					w.Write(pdf)
 				} else {
 					log.Error(fmt.Sprintf("Failed to render: %v\n Error: %v", form.TargetUrl, pdfErr))
