@@ -87,21 +87,27 @@ func printDeadline() time.Duration {
 	return printDeadline
 }
 
-func listenForRequest(c *chan *network.RequestWillBeSentReply, requestWillBeSentClient network.RequestWillBeSentClient) {
+func listenForRequest(c chan *network.RequestWillBeSentReply, requestWillBeSentClient network.RequestWillBeSentClient) {
 	defer func() {recover()}()
 
 	for {
 		reply, _ := requestWillBeSentClient.Recv()
-		*c <- reply
+		select {
+		case c <- reply:
+		default:
+		}
 	}
 }
 
-func listenForResponse(c *chan *network.ResponseReceivedReply, responseReceivedClient network.ResponseReceivedClient) {
+func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedClient network.ResponseReceivedClient) {
 	defer func() {recover()}()
 
 	for {
 		reply, _ := responseReceivedClient.Recv()
-		*c <- reply
+		select {
+		case c <- reply:
+		default:
+		}
 	}
 }
 
@@ -186,14 +192,16 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	responseReceivedClient, _ := c.Network.ResponseReceived(ctx)
 	defer responseReceivedClient.Close()
 
-	requestWillBeSentChan := make(chan *network.RequestWillBeSentReply)
+	requestWillBeSentChan := make(chan *network.RequestWillBeSentReply, 64)
 	defer close(requestWillBeSentChan)
 
-	responseReceivedChan := make(chan *network.ResponseReceivedReply)
+	responseReceivedChan := make(chan *network.ResponseReceivedReply, 64)
 	defer close(responseReceivedChan)
 
-	go listenForRequest(&requestWillBeSentChan, requestWillBeSentClient)
-	go listenForResponse(&responseReceivedChan, responseReceivedClient)
+	go listenForRequest(requestWillBeSentChan, requestWillBeSentClient)
+	go listenForResponse(responseReceivedChan, responseReceivedClient)
+
+	log.Info(fmt.Sprintf("Navigating to: %v", request.TargetUrl))
 
 	// Tell the page to navigate to the URL
 	navArgs := page.NewNavigateArgs(request.TargetUrl)
@@ -238,6 +246,8 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 			curAttempt++
 		}
 	}
+
+	log.Info(fmt.Sprintf("Navigated to: %v", request.TargetUrl))
 
 	// Print to PDF
 	printToPDFArgs := page.NewPrintToPDFArgs().
