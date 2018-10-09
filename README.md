@@ -1,6 +1,6 @@
 # PDF-RENDERER
 
-This app runs in conjunction with a headless chrome browser. It listens for requests on port 9766. Upon receiving a render request, it will go to a URL, render the page and respond with a zip file. The zip file will contain a json file and a zip file. The json file will be a list of network requests made by the page that was rendered. The pdf file will be a print-out of the page. 
+This service runs in conjunction with a headless chrome browser. It listens for requests on port 9766. Upon receiving a render request, it will go to a URL, render the page and respond with a zip file. The zip file will contain a json file and a zip file. The json file will be a list of network requests made by the page that was rendered. The pdf file will be a print-out of the page. 
 
 ## Features:
 
@@ -14,7 +14,7 @@ In order to provide some insight into how well the page was rendered, the zip fi
 You can provide custom headers that will be used by headless chrome when making all network requests.
 
 #### Request Correlation
-If your request timed out, this will allow you to make a request again with the same correlation id and possibly get a stored version of the pdf instead of having to generate it again. The stored version is encrypted at rest and will be eligible for deletion by the service after some time.
+If your request timed out, this will allow you to make a request again with the same correlation id and possibly get a stored version of the zip containing the pdf instead of having to generate it again. The stored version is encrypted at rest and will be eligible for deletion by the service after some time.
 
 ## Configuration
 
@@ -26,11 +26,11 @@ Description: when "true", outputs debug log messages and enables other debugging
 
 #### PDF_RENDERER_KEY
 Default Value: (string) `JKNV29t8yYEy21TO0UzvDsX2KgiWrOVy`  
-Description: defines the key used to encrypt the pdf files while at rest
+Description: defines the key used to encrypt the zip files while at rest
 
 #### PDF_RENDERER_STORAGE_DIRECTORY
 Default Value: (string) `/tmp/pdf-renderer`  
-Description: defines the directory in which the encrypted pdfs are temporarily stored
+Description: defines the directory in which the encrypted zip files are temporarily stored
 
 #### FILE_RETENTION_DURATION
 Default Value: (string) `1h`  
