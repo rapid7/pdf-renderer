@@ -24,7 +24,7 @@ import (
 type GeneratePdfRequest struct {
 	CorrelationId string `json:"correlationId"`
 	TargetUrl string `json:"targetUrl"`
-	Headers map[string]string `json:"headers"`
+	Headers map[string]string `json:"headers,omitempty"`
 	Orientation string `json:"orientation"`
 	PrintBackground bool `json:"printBackground"`
 	MarginTop float64 `json:"marginTop"`
@@ -118,12 +118,6 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 }
 
 func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte, error) {
-	headers, marshallErr := json.Marshal(request.Headers)
-	if marshallErr != nil {
-		return nil, nil, marshallErr
-	}
-	extraHeaders := network.NewSetExtraHTTPHeadersArgs(headers)
-
 	// Use the DevTools API to manage targets
 	devt := devtool.New("http://127.0.0.1:9222")
 	pt, err := devt.Get(ctx, devtool.Page)
@@ -180,9 +174,17 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 	}
 
 	// Set custom headers
-	err = c.Network.SetExtraHTTPHeaders(ctx, extraHeaders)
-	if err != nil {
-		return nil, nil, err
+	if request.Headers != nil {
+		headers, marshallErr := json.Marshal(request.Headers)
+		if marshallErr != nil {
+			return nil, nil, marshallErr
+		}
+		extraHeaders := network.NewSetExtraHTTPHeadersArgs(headers)
+
+		err = c.Network.SetExtraHTTPHeaders(ctx, extraHeaders)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// Enable events
