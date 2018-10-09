@@ -277,7 +277,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 		return nil, nil, err
 	}
 
-	summaries, _ :=json.Marshal(responseSummaries)
+	summaries, _ := json.Marshal(responseSummaries)
 
 	return summaries, pdf.Data, nil
 }
