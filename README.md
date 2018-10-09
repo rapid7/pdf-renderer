@@ -1,6 +1,6 @@
 # PDF-RENDERER
 
-This service runs in conjunction with a headless chrome browser. It listens for requests on port 9766. Upon receiving a render request, it will go to a URL, render the page and respond with a zip file. The zip file will contain a json file and a zip file. The json file will be a list of network requests made by the page that was rendered. The pdf file will be a print-out of the page. 
+This service runs in conjunction with a headless chrome browser. It listens for requests on port 9766. Upon receiving a render request, it will go to a URL, render the page and respond with a zip file. The zip file will contain a json file and a pdf file. The json file will be a list of network requests made by the page that was rendered. The pdf file will be a print-out of the page. 
 
 ## Features:
 
@@ -79,3 +79,4 @@ curl -X POST \
 ## TODO
 * add support for other headless browsers
 * upload to s3
+* make the QoS more robust (request method, time to generate, etc)
