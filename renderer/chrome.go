@@ -44,6 +44,12 @@ func DefaultGeneratePdfRequest() GeneratePdfRequest {
 	}
 }
 
+type ResponseSummary struct {
+	URL string `json:"url"`
+	Status int `json:"status"`
+	StatusText string `json:"statusText"`
+}
+
 const DEFAULT_REQUEST_POLL_RETRIES = 10
 const DEFAULT_REQUEST_POLL_INTERVAL = "1s"
 const DEFAULT_PRINT_DEADLINE = "5m"
@@ -111,10 +117,10 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 	}
 }
 
-func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) {
+func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte, error) {
 	headers, marshallErr := json.Marshal(request.Headers)
 	if marshallErr != nil {
-		return nil, marshallErr
+		return nil, nil, marshallErr
 	}
 	extraHeaders := network.NewSetExtraHTTPHeadersArgs(headers)
 
@@ -124,7 +130,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	if err != nil {
 		pt, err = devt.Create(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	defer devt.Close(ctx, pt)
@@ -132,7 +138,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	// Open a new RPC connection to the Chrome Debugging Protocol target
 	conn, err := rpcc.DialContext(ctx, pt.WebSocketDebuggerURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer conn.Close()
 
@@ -140,14 +146,14 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	baseBrowser := cdp.NewClient(conn)
 	newContextTarget, err := baseBrowser.Target.CreateBrowserContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create a new blank target
 	newTargetArgs := target.NewCreateTargetArgs("about:blank").SetBrowserContextID(newContextTarget.BrowserContextID)
 	newTarget, err := baseBrowser.Target.CreateTarget(ctx, newTargetArgs)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	closeTargetArgs := target.NewCloseTargetArgs(newTarget.TargetID)
 	defer baseBrowser.Target.CloseTarget(ctx, closeTargetArgs)
@@ -156,7 +162,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	newTargetWsURL := fmt.Sprintf("ws://127.0.0.1:9222/devtools/page/%s", newTarget.TargetID)
 	newContextConn, err := rpcc.DialContext(ctx, newTargetWsURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer newContextConn.Close()
 	c := cdp.NewClient(newContextConn)
@@ -164,25 +170,25 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	// Enable the runtime
 	err = c.Runtime.Enable(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Enable the network
 	err = c.Network.Enable(ctx, network.NewEnableArgs())
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Set custom headers
 	err = c.Network.SetExtraHTTPHeaders(ctx, extraHeaders)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Enable events
 	err = c.Page.Enable(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Start listening for requests
@@ -208,6 +214,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 	c.Page.Navigate(ctx, navArgs)
 
 	// Wait for the page to finish loading
+	var responseSummaries []ResponseSummary
 	curAttempt := 0
 	pendingRequests := 0
 	requestPollRetries := requestPollRetries()
@@ -229,6 +236,12 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 				break
 			case reply := <-responseReceivedChan:
 				if reply.Type.String() != "Document" {
+					summary := ResponseSummary{
+						URL: reply.Response.URL,
+						Status: reply.Response.Status,
+						StatusText: reply.Response.StatusText,
+					}
+					responseSummaries = append(responseSummaries, summary)
 					if reply.Response.Status >= 400 {
 						log.Error(fmt.Sprintf("Status: %v, Received: %v", reply.Response.Status, reply.Response.URL))
 					} else {
@@ -259,9 +272,10 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, error) 
 		SetMarginLeft(request.MarginLeft)
 	pdf, err := c.Page.PrintToPDF(ctx, printToPDFArgs)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return pdf.Data, nil
-}
+	summaries, _ :=json.Marshal(responseSummaries)
 
+	return summaries, pdf.Data, nil
+}

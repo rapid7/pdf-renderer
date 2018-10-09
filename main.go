@@ -17,6 +17,8 @@ import (
 	"time"
 	"github.com/rapid7/pdf-renderer/storage"
 	"runtime"
+	"bytes"
+	"archive/zip"
 )
 
 func init() {
@@ -50,6 +52,22 @@ func bToMb(b uint64) float64 {
 	return float64(b) / 1024.0 / 1024.0
 }
 
+func createZip(correlationId string, summaries []byte, pdfData []byte) ([]byte) {
+	buf := new(bytes.Buffer)
+
+	zipWriter := zip.NewWriter(buf)
+
+	reportFile, _ := zipWriter.Create(correlationId + ".json")
+	_, _ = reportFile.Write(summaries)
+
+	pdfFile, _ := zipWriter.Create(correlationId + ".pdf")
+	_, _ = pdfFile.Write(pdfData)
+
+	_ = zipWriter.Close()
+
+	return buf.Bytes()
+}
+
 func main() {
 
 	log.Print("setting up")
@@ -72,24 +90,25 @@ func main() {
 				return
 			}
 
-			fileName := form.CorrelationId + ".pdf"
-			pdf, _ := storage.ReadFromFile(fileName)
-			if pdf != nil {
+			fileName := form.CorrelationId + ".zip"
+			zipFile, _ := storage.ReadFromFile(fileName)
+			if zipFile != nil {
 				log.Info(fmt.Sprintf("Loading PDF using correlation id."))
 				w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
-				w.Write(pdf)
+				w.Write(zipFile)
 			} else {
 				log.Info(fmt.Sprintf("Rendering: %v", form.TargetUrl))
 
 				startTime := time.Now()
-				pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
+				summaries, pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
+				zipFile = createZip(form.CorrelationId, summaries, pdf)
 				if pdfErr == nil {
 					log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
 
-					storage.WriteToFile(pdf, fileName)
+					storage.WriteToFile(zipFile, fileName)
 
 					w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
-					w.Write(pdf)
+					w.Write(zipFile)
 				} else {
 					log.Error(fmt.Sprintf("Failed to render: %v\n Error: %v", form.TargetUrl, pdfErr))
 
@@ -110,4 +129,3 @@ func main() {
 
 	http.ListenAndServe(":9766", router)
 }
-
