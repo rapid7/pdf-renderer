@@ -192,11 +192,13 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 	}
 
 	if request.ClearCache {
+		baseBrowser.Network.ClearBrowserCache(ctx)
 		c.Network.ClearBrowserCache(ctx)
 		log.Info(fmt.Sprintf("Cleared cache"))
 	}
 
 	if request.ClearCookies {
+		baseBrowser.Network.ClearBrowserCookies(ctx)
 		c.Network.ClearBrowserCookies(ctx)
 		log.Info(fmt.Sprintf("Cleared cookies"))
 	}

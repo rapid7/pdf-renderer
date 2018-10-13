@@ -70,8 +70,6 @@ func createZip(correlationId string, summaries []byte, pdfData []byte) ([]byte) 
 
 func main() {
 
-	log.Print("setting up")
-
 	if os.Getenv("DEBUG") == "true" {
 		go PeriodicallyLogMemUsage()
 	}
@@ -127,7 +125,7 @@ func main() {
 		},
 	).Methods("GET")
 
-	log.Print("starting")
+	log.Print(fmt.Sprintf("listening on port: %v", 9766))
 
 	http.ListenAndServe(":9766", router)
 }
