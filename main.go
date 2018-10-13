@@ -93,7 +93,8 @@ func main() {
 			fileName := form.CorrelationId + ".zip"
 			zipFile, _ := storage.ReadFromFile(fileName)
 			if zipFile != nil {
-				log.Info(fmt.Sprintf("Loading PDF using correlation id."))
+				log.Info(fmt.Sprintf("Loading response using correlation id: %v", form.CorrelationId))
+				w.Header().Add("Content-Type", "application/zip")
 				w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
 				w.Write(zipFile)
 			} else {
@@ -107,6 +108,7 @@ func main() {
 
 					storage.WriteToFile(zipFile, fileName)
 
+					w.Header().Add("Content-Type", "application/zip")
 					w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
 					w.Write(zipFile)
 				} else {
