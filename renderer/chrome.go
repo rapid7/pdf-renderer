@@ -25,6 +25,8 @@ type GeneratePdfRequest struct {
 	CorrelationId string `json:"correlationId"`
 	TargetUrl string `json:"targetUrl"`
 	Headers map[string]string `json:"headers,omitempty"`
+	ClearCache bool `json:"clearCache,omitempty"`
+	ClearCookies bool `json:"clearCookies,omitempty"`
 	Orientation string `json:"orientation"`
 	PrintBackground bool `json:"printBackground"`
 	MarginTop float64 `json:"marginTop"`
@@ -35,6 +37,8 @@ type GeneratePdfRequest struct {
 
 func DefaultGeneratePdfRequest() GeneratePdfRequest {
 	return GeneratePdfRequest {
+		ClearCache: true,
+		ClearCookies: true,
 		Orientation: "Portrait",
 		PrintBackground: true,
 		MarginTop: 0.4,
@@ -185,6 +189,14 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 		if err != nil {
 			return nil, nil, err
 		}
+	}
+
+	if request.ClearCache {
+		c.Network.ClearBrowserCache(ctx)
+	}
+
+	if request.ClearCookies {
+		c.Network.ClearBrowserCookies(ctx)
 	}
 
 	// Enable events
