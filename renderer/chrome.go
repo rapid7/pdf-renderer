@@ -193,10 +193,12 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 
 	if request.ClearCache {
 		c.Network.ClearBrowserCache(ctx)
+		log.Info(fmt.Sprintf("Cleared cache"))
 	}
 
 	if request.ClearCookies {
 		c.Network.ClearBrowserCookies(ctx)
+		log.Info(fmt.Sprintf("Cleared cookies"))
 	}
 
 	// Enable events
@@ -220,8 +222,6 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 
 	go listenForRequest(requestWillBeSentChan, requestWillBeSentClient)
 	go listenForResponse(responseReceivedChan, responseReceivedClient)
-
-	log.Info(fmt.Sprintf("Navigating to: %v", request.TargetUrl))
 
 	// Tell the page to navigate to the URL
 	navArgs := page.NewNavigateArgs(request.TargetUrl)
@@ -273,8 +273,6 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 			curAttempt++
 		}
 	}
-
-	log.Info(fmt.Sprintf("Navigated to: %v", request.TargetUrl))
 
 	// Print to PDF
 	printToPDFArgs := page.NewPrintToPDFArgs().
