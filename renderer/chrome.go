@@ -19,14 +19,13 @@ import (
 	"time"
 	"os"
 	"strconv"
+	"github.com/mafredri/cdp/session"
 )
 
 type GeneratePdfRequest struct {
 	CorrelationId string `json:"correlationId"`
 	TargetUrl string `json:"targetUrl"`
 	Headers map[string]string `json:"headers,omitempty"`
-	ClearCache bool `json:"clearCache,omitempty"`
-	ClearCookies bool `json:"clearCookies,omitempty"`
 	Orientation string `json:"orientation"`
 	PrintBackground bool `json:"printBackground"`
 	MarginTop float64 `json:"marginTop"`
@@ -37,8 +36,6 @@ type GeneratePdfRequest struct {
 
 func DefaultGeneratePdfRequest() GeneratePdfRequest {
 	return GeneratePdfRequest {
-		ClearCache: true,
-		ClearCookies: true,
 		Orientation: "Portrait",
 		PrintBackground: true,
 		MarginTop: 0.4,
@@ -142,10 +139,20 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 
 	// Create new browser context
 	baseBrowser := cdp.NewClient(conn)
+
+	// Initialize session manager for connecting to targets.
+	sessionManager, err := session.NewManager(baseBrowser)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer sessionManager.Close()
+
+	// Basically create an incognito window
 	newContextTarget, err := baseBrowser.Target.CreateBrowserContext(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer baseBrowser.Target.DisposeBrowserContext(ctx, target.NewDisposeBrowserContextArgs(newContextTarget.BrowserContextID))
 
 	// Create a new blank target
 	newTargetArgs := target.NewCreateTargetArgs("about:blank").SetBrowserContextID(newContextTarget.BrowserContextID)
@@ -154,11 +161,15 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 		return nil, nil, err
 	}
 	closeTargetArgs := target.NewCloseTargetArgs(newTarget.TargetID)
-	defer baseBrowser.Target.CloseTarget(ctx, closeTargetArgs)
+	defer func() {
+		closeReply, err := baseBrowser.Target.CloseTarget(ctx, closeTargetArgs)
+		if err != nil || !closeReply.Success {
+			log.Error(fmt.Sprintf("Could not close target for: %v", request.TargetUrl))
+		}
+	}()
 
-	// Connect to the new target
-	newTargetWsURL := fmt.Sprintf("ws://127.0.0.1:9222/devtools/page/%s", newTarget.TargetID)
-	newContextConn, err := rpcc.DialContext(ctx, newTargetWsURL)
+	// Connect to target using the existing websocket connection.
+	newContextConn, err := sessionManager.Dial(ctx, newTarget.TargetID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -189,18 +200,6 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 		if err != nil {
 			return nil, nil, err
 		}
-	}
-
-	if request.ClearCache {
-		baseBrowser.Network.ClearBrowserCache(ctx)
-		c.Network.ClearBrowserCache(ctx)
-		log.Info(fmt.Sprintf("Cleared cache"))
-	}
-
-	if request.ClearCookies {
-		baseBrowser.Network.ClearBrowserCookies(ctx)
-		c.Network.ClearBrowserCookies(ctx)
-		log.Info(fmt.Sprintf("Cleared cookies"))
 	}
 
 	// Enable events
