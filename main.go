@@ -100,11 +100,10 @@ func main() {
 
 				startTime := time.Now()
 				summaries, pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
-				zipFile = createZip(form.CorrelationId, summaries, pdf)
 				if pdfErr == nil {
-					log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
+					storage.WriteToFile(createZip(form.CorrelationId, summaries, pdf), fileName)
 
-					storage.WriteToFile(zipFile, fileName)
+					log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
 
 					w.Header().Add("Content-Type", "application/zip")
 					w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")

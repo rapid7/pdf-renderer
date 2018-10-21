@@ -164,7 +164,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 	defer func() {
 		closeReply, err := baseBrowser.Target.CloseTarget(ctx, closeTargetArgs)
 		if err != nil || !closeReply.Success {
-			log.Error(fmt.Sprintf("Could not close target for: %v", request.TargetUrl))
+			log.Error(fmt.Sprintf("Could not close target for: %v because: %v", request.TargetUrl, err))
 		}
 	}()
 
@@ -243,6 +243,10 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 		for {
 			select {
 			case reply := <-requestWillBeSentChan:
+				if nil == reply {
+					break
+				}
+
 				if reply.Type.String() != "Document" {
 					log.Debug(fmt.Sprintf("Requested: %v", reply.Request.URL))
 					pendingRequests++
@@ -250,6 +254,10 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 				}
 				break
 			case reply := <-responseReceivedChan:
+				if nil == reply {
+					break
+				}
+
 				if reply.Type.String() != "Document" {
 					summary := ResponseSummary{
 						URL: reply.Response.URL,
