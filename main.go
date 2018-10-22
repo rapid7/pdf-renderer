@@ -101,7 +101,8 @@ func main() {
 				startTime := time.Now()
 				summaries, pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
 				if pdfErr == nil {
-					storage.WriteToFile(createZip(form.CorrelationId, summaries, pdf), fileName)
+					zipFile = createZip(form.CorrelationId, summaries, pdf)
+					storage.WriteToFile(zipFile, fileName)
 
 					log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
 
