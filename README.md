@@ -76,7 +76,13 @@ curl -X POST \
 }'
 ```
 
+## Special Notes
+* Please be aware that the correlationId you provide is used to name the file that's temporarily stored onto the file system. This means that if the correlation id is a relative path, you could accidentally write to sections of the file system that you did not intend to write to.
+* Please be cautious with the potential values for target url and the potential recipients of the response. If the value of the targetUrl is a sensitive url, sensitive data could be exposed. For example, setting it to 169.254.169.254 (aws meta-data service) could expose information that you might not want exposed.
+
 ## TODO
 * add support for other headless browsers
 * upload to s3
 * make the QoS more robust (request method, time to generate, etc)
+* blacklist for targetUrl values
+* enable/disable for various features
