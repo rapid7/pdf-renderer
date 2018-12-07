@@ -1,9 +1,8 @@
 /***************************************************************************
  * COPYRIGHT (C) 2018, Rapid7 LLC, Boston, MA, USA.
- * All rights reserved. This material contains unpublished, copyrighted
- * work including confidential and proprietary information of Rapid7.
+ * This code is licensed under MIT license (see LICENSE for details)
  **************************************************************************/
- package main
+package main
 
 import (
 	"encoding/json"
@@ -11,26 +10,28 @@ import (
 	"os"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"github.com/rapid7/pdf-renderer/renderer"
 	"fmt"
-	"context"
 	"time"
 	"github.com/rapid7/pdf-renderer/storage"
 	"runtime"
 	"bytes"
 	"archive/zip"
+	"github.com/rapid7/pdf-renderer/web"
+	"github.com/rapid7/pdf-renderer/renderer"
+	"context"
 )
 
 func init() {
 	// logging
 	log.SetFormatter(&log.JSONFormatter{})
+	log.SetOutput(os.Stdout)
 	if os.Getenv("DEBUG") == "true" {
 		log.SetLevel(log.DebugLevel)
+		go periodicallyLogMemUsage()
 	}
-	log.SetOutput(os.Stdout)
 }
 
-func PeriodicallyLogMemUsage() {
+func periodicallyLogMemUsage() {
 	for {
 		var m runtime.MemStats
 		runtime.ReadMemStats(&m)
@@ -69,17 +70,12 @@ func createZip(correlationId string, summaries []byte, pdfData []byte) ([]byte) 
 }
 
 func main() {
-
-	if os.Getenv("DEBUG") == "true" {
-		go PeriodicallyLogMemUsage()
-	}
-
 	router := mux.NewRouter()
 
 	router.HandleFunc(
 		"/render",
 		func(w http.ResponseWriter, r *http.Request) {
-			form := renderer.DefaultGeneratePdfRequest()
+			form := web.DefaultGeneratePdfRequest()
 			decoderErr := json.NewDecoder(r.Body).Decode(&form)
 			if decoderErr != nil {
 				log.Error(fmt.Sprintf("%v", decoderErr.Error()))
@@ -88,32 +84,42 @@ func main() {
 				return
 			}
 
-			fileName := form.CorrelationId + ".zip"
-			zipFile, _ := storage.ReadFromFile(fileName)
+			correlationFileName := form.CorrelationId + ".zip"
+			if len(form.FileName) == 0 {
+				form.FileName = correlationFileName
+			}
+
+			correlationFile, _ := storage.NewCorrelationFile(correlationFileName)
+			zipFile, _ := correlationFile.Read()
 			if zipFile != nil {
 				log.Info(fmt.Sprintf("Loading response using correlation id: %v", form.CorrelationId))
 				w.Header().Add("Content-Type", "application/zip")
-				w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+				w.Header().Add("Content-Disposition", "attachment; filename=\"" + correlationFile.FileName() + "\"")
+				w.Write(zipFile)
+
+				return
+			}
+
+			log.Info(fmt.Sprintf("Rendering: %v", form.TargetUrl))
+
+			startTime := time.Now()
+			summaries, pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
+			if pdfErr == nil {
+				zipFile = createZip(form.CorrelationId, summaries, pdf)
+				correlationFile.Write(zipFile)
+
+				storedFile, _ := storage.NewStoredFile(form.FileName)
+				storedFile.Write(zipFile)
+
+				log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
+
+				w.Header().Add("Content-Type", "application/zip")
+				w.Header().Add("Content-Disposition", "attachment; filename=\"" + storedFile.FileName() + "\"")
 				w.Write(zipFile)
 			} else {
-				log.Info(fmt.Sprintf("Rendering: %v", form.TargetUrl))
+				log.Error(fmt.Sprintf("Failed to render: %v\n Error: %v", form.TargetUrl, pdfErr))
 
-				startTime := time.Now()
-				summaries, pdf, pdfErr := renderer.CreatePdf(context.Background(), form)
-				if pdfErr == nil {
-					zipFile = createZip(form.CorrelationId, summaries, pdf)
-					storage.WriteToFile(zipFile, fileName)
-
-					log.Info(fmt.Sprintf("Rendered: %v (%v seconds)", form.TargetUrl, time.Since(startTime).Seconds()))
-
-					w.Header().Add("Content-Type", "application/zip")
-					w.Header().Add("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
-					w.Write(zipFile)
-				} else {
-					log.Error(fmt.Sprintf("Failed to render: %v\n Error: %v", form.TargetUrl, pdfErr))
-
-					w.WriteHeader(500)
-				}
+				w.WriteHeader(500)
 			}
 		},
 	).Methods("POST")

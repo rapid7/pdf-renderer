@@ -1,7 +1,6 @@
 /***************************************************************************
  * COPYRIGHT (C) 2018, Rapid7 LLC, Boston, MA, USA.
- * All rights reserved. This material contains unpublished, copyrighted
- * work including confidential and proprietary information of Rapid7.
+ * This code is licensed under MIT license (see LICENSE for details)
  **************************************************************************/
 package renderer
 
@@ -20,33 +19,11 @@ import (
 	"os"
 	"strconv"
 	"github.com/mafredri/cdp/session"
+	"github.com/rapid7/pdf-renderer/web"
 )
 
-type GeneratePdfRequest struct {
-	CorrelationId string `json:"correlationId"`
-	TargetUrl string `json:"targetUrl"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Orientation string `json:"orientation"`
-	PrintBackground bool `json:"printBackground"`
-	MarginTop float64 `json:"marginTop"`
-	MarginRight float64 `json:"marginRight"`
-	MarginBottom float64 `json:"marginBottom"`
-	MarginLeft float64 `json:"marginLeft"`
-}
-
-func DefaultGeneratePdfRequest() GeneratePdfRequest {
-	return GeneratePdfRequest {
-		Orientation: "Portrait",
-		PrintBackground: true,
-		MarginTop: 0.4,
-		MarginRight: 0.4,
-		MarginBottom: 0.4,
-		MarginLeft: 0.4,
-	}
-}
-
 type ResponseSummary struct {
-	URL string `json:"url"`
+	Url string `json:"url"`
 	Status int `json:"status"`
 	StatusText string `json:"statusText"`
 }
@@ -57,7 +34,7 @@ const DEFAULT_PRINT_DEADLINE = "5m"
 
 func requestPollRetries() int {
 	requestPollRetries := DEFAULT_REQUEST_POLL_RETRIES
-	configRequestPollRetries := os.Getenv("REQUEST_POLL_RETRIES")
+	configRequestPollRetries := os.Getenv("PDF_RENDERER_REQUEST_POLL_RETRIES")
 	if len(configRequestPollRetries) > 0 {
 		tmp, err := strconv.Atoi(configRequestPollRetries)
 		if err == nil {
@@ -70,7 +47,7 @@ func requestPollRetries() int {
 
 func requestPollInterval() time.Duration {
 	requestPollInterval, _ := time.ParseDuration(DEFAULT_REQUEST_POLL_INTERVAL)
-	configRequestPollInterval := os.Getenv("REQUEST_POLL_INTERVAL")
+	configRequestPollInterval := os.Getenv("PDF_RENDERER_REQUEST_POLL_INTERVAL")
 	if len(configRequestPollInterval) > 0 {
 		tmp, err := time.ParseDuration(configRequestPollInterval)
 		if err == nil {
@@ -83,7 +60,7 @@ func requestPollInterval() time.Duration {
 
 func printDeadline() time.Duration {
 	printDeadline, _ := time.ParseDuration(DEFAULT_PRINT_DEADLINE)
-	configPrintDeadline := os.Getenv("PRINT_DEADLINE_MINUTES")
+	configPrintDeadline := os.Getenv("PDF_RENDERER_PRINT_DEADLINE_MINUTES")
 	if len(configPrintDeadline) > 0 {
 		tmp, err := time.ParseDuration(configPrintDeadline)
 		if err == nil {
@@ -118,7 +95,7 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 	}
 }
 
-func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte, error) {
+func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []byte, error) {
 	// Use the DevTools API to manage targets
 	devt := devtool.New("http://127.0.0.1:9222")
 	pt, err := devt.Get(ctx, devtool.Page)
@@ -260,7 +237,7 @@ func CreatePdf(ctx context.Context, request GeneratePdfRequest) ([]byte, []byte,
 
 				if reply.Type.String() != "Document" {
 					summary := ResponseSummary{
-						URL: reply.Response.URL,
+						Url: reply.Response.URL,
 						Status: reply.Response.Status,
 						StatusText: reply.Response.StatusText,
 					}
