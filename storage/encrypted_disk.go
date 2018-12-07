@@ -1,7 +1,6 @@
 /***************************************************************************
  * COPYRIGHT (C) 2018, Rapid7 LLC, Boston, MA, USA.
- * All rights reserved. This material contains unpublished, copyrighted
- * work including confidential and proprietary information of Rapid7.
+ * This code is licensed under MIT license (see LICENSE for details)
  **************************************************************************/
 package storage
 
@@ -10,20 +9,11 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
-	"io/ioutil"
 	"os"
-	"time"
-	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 )
 
 const DEFAULT_KEYSTRING = "JKNV29t8yYEy21TO0UzvDsX2KgiWrOVy"
-const DEFAULT_STORAGE_DIRECTORY = "/tmp/pdf-renderer/"
-const DEFAULT_FILE_RETENTION_DURATION = "1h"
-
-func init() {
-	os.MkdirAll(storageDirectory(), os.ModePerm)
-	go deleteExpiredFiles()
-}
 
 func key() []byte {
 	key := []byte(DEFAULT_KEYSTRING)
@@ -33,33 +23,6 @@ func key() []byte {
 	}
 
 	return key
-}
-
-func storageDirectory() string {
-	storageDirectory := DEFAULT_STORAGE_DIRECTORY
-	configStorageDirectory := os.Getenv("PDF_RENDERER_STORAGE_DIRECTORY")
-	if len(configStorageDirectory) > 0 {
-		storageDirectory = configStorageDirectory
-	}
-
-	return storageDirectory
-}
-
-func fileRetentionDuration() time.Duration {
-	fileRetentionDuration, _ := time.ParseDuration(DEFAULT_FILE_RETENTION_DURATION)
-	configFileRetentionDuration := os.Getenv("FILE_RETENTION_DURATION")
-	if len(configFileRetentionDuration) > 0 {
-		tmp, err := time.ParseDuration(configFileRetentionDuration)
-		if err == nil {
-			fileRetentionDuration = tmp
-		}
-	}
-
-	return fileRetentionDuration
-}
-
-func pathToFile(fileName string) string {
-	return storageDirectory() + fileName
 }
 
 func decrypt(encryptedData []byte) []byte {
@@ -101,37 +64,29 @@ func encrypt(unencryptedData []byte) []byte {
 	return encryptedData
 }
 
-func fileExists(file string) bool {
-	_, err := os.Stat(pathToFile(file))
+func fileExists(fullFilePath string) bool {
+	_, err := os.Stat(fullFilePath)
+
 	return err == nil
 }
 
-func deleteExpiredFiles() {
-	storageDirectory := storageDirectory()
-	for {
-		files, err := ioutil.ReadDir(storageDirectory)
-		if err != nil {
-			break
-		}
-
-		for _, f := range files {
-			if time.Since(f.ModTime()) > fileRetentionDuration() {
-				os.Remove(storageDirectory + f.Name())
-				log.Debug("Deleting: " + storageDirectory + f.Name())
-			}
-		}
-
-		time.Sleep(15 * time.Minute)
-	}
+type encryptedFile struct {
+	filePath string
+	fileName string
 }
 
-func WriteToFile(data []byte, file string) {
-	ioutil.WriteFile(pathToFile(file), encrypt(data), os.ModePerm)
+func (ed encryptedFile) FileName() string {
+	return ed.fileName
 }
 
-func ReadFromFile(file string) ([]byte, error) {
-	if fileExists(file) {
-		data, err := ioutil.ReadFile(pathToFile(file))
+func (ed encryptedFile) Write(data []byte) error {
+	return ioutil.WriteFile(ed.filePath + ed.fileName, encrypt(data), os.ModePerm)
+}
+
+func (ed encryptedFile) Read() ([]byte, error) {
+	fullFilePath := ed.filePath + ed.fileName
+	if fileExists(fullFilePath) {
+		data, err := ioutil.ReadFile(fullFilePath)
 
 		return decrypt(data), err
 	} else {

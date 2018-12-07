@@ -26,25 +26,33 @@ Description: when "true", outputs debug log messages and enables other debugging
 
 #### PDF_RENDERER_KEY
 Default Value: (string) `JKNV29t8yYEy21TO0UzvDsX2KgiWrOVy`  
-Description: defines the key used to encrypt the zip files while at rest
+Description: defines the key used to encrypt the files while at rest
+
+#### PDF_RENDERER_STORAGE_STRATEGY
+Default Value: (string) `noop`  
+Description: defines the strategy by which to store a copy of the generated files
 
 #### PDF_RENDERER_STORAGE_DIRECTORY
-Default Value: (string) `/tmp/pdf-renderer`  
-Description: defines the directory in which the encrypted zip files are temporarily stored
+Default Value: (string) `/tmp/pdf-renderer/`  
+Description: defines the directory in which the encrypted zip files are stored when using the "disk" storage strategy
 
-#### FILE_RETENTION_DURATION
+#### PDF_RENDERER_CORRELATION_STORAGE_DIRECTORY
+Default Value: (string) `/tmp/pdf-renderer-correlation/`  
+Description: defines the directory in which the encrypted zip files are temporarily stored for correlation purposes
+
+#### PDF_RENDERER_CORRELATION_RETENTION_DURATION
 Default Value: (string) `1h`  
-Description: defines the minimum age at which a temporarily stored file becomes eligible for deletion
+Description: defines the minimum age at which a temporarily stored correlation file becomes eligible for deletion
 
-#### REQUEST_POLL_RETRIES
+#### PDF_RENDERER_REQUEST_POLL_RETRIES
 Default Value: (int) `10`  
 Description: defines the number of times to poll the browser for new network requests/responses when no requests are pending before assuming the page is done rendering
 
-#### REQUEST_POLL_INTERVAL
+#### PDF_RENDERER_REQUEST_POLL_INTERVAL
 Default Value: (time.Duration) `1s`  
 Description: defines the amount of time between each poll for new network requests/responses
 
-#### PRINT_DEADLINE
+#### PDF_RENDERER_PRINT_DEADLINE
 Default Value: (time.Duration) `5m`  
 Description: defines the maximum amount of time to spend on any given render request before simply printing whatever is there 
 
@@ -63,6 +71,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"correlationId": "7667e2de-2f21-4ab7-9afb-402de2a6468f",
+	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip"
 	"targetUrl": "https://example.com",
 	"headers": {
 		"Cookie": "cookiename: cookievalue"
@@ -75,6 +84,8 @@ curl -X POST \
 	"marginLeft": 0.4
 }'
 ```
+
+The response is a zip file.
 
 ## Special Notes
 * Please be aware that the correlationId you provide is used to name the file that's temporarily stored onto the file system. This means that if the correlation id is a relative path, you could accidentally write to sections of the file system that you did not intend to write to.
