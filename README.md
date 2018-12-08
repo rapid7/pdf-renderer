@@ -30,7 +30,9 @@ Description: defines the key used to encrypt the files while at rest
 
 #### PDF_RENDERER_STORAGE_STRATEGY
 Default Value: (string) `noop`  
-Description: defines the strategy by which to store a copy of the generated files
+Description: defines the strategy by which to store a copy of the generated files. Valid strategies:
+* noop: does nothing
+* disk: stores a copy of the encrypted file to disk, the file path can be configured via PDF_RENDERER_STORAGE_DIRECTORY
 
 #### PDF_RENDERER_STORAGE_DIRECTORY
 Default Value: (string) `/tmp/pdf-renderer/`  
