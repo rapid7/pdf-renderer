@@ -16,59 +16,25 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"time"
-	"os"
-	"strconv"
 	"github.com/mafredri/cdp/session"
-	"github.com/rapid7/pdf-renderer/web"
+	"github.com/rapid7/pdf-renderer/cfg"
 )
 
-type ResponseSummary struct {
+type ChromeParameters struct {
+	TargetUrl string
+	Headers map[string]string
+	Orientation string
+	PrintBackground bool
+	MarginTop float64
+	MarginRight float64
+	MarginBottom float64
+	MarginLeft float64
+}
+
+type responseSummary struct {
 	Url string `json:"url"`
 	Status int `json:"status"`
 	StatusText string `json:"statusText"`
-}
-
-const DEFAULT_REQUEST_POLL_RETRIES = 10
-const DEFAULT_REQUEST_POLL_INTERVAL = "1s"
-const DEFAULT_PRINT_DEADLINE = "5m"
-
-func requestPollRetries() int {
-	requestPollRetries := DEFAULT_REQUEST_POLL_RETRIES
-	configRequestPollRetries := os.Getenv("PDF_RENDERER_REQUEST_POLL_RETRIES")
-	if len(configRequestPollRetries) > 0 {
-		tmp, err := strconv.Atoi(configRequestPollRetries)
-		if err == nil {
-			requestPollRetries = tmp
-		}
-	}
-
-	return requestPollRetries
-}
-
-func requestPollInterval() time.Duration {
-	requestPollInterval, _ := time.ParseDuration(DEFAULT_REQUEST_POLL_INTERVAL)
-	configRequestPollInterval := os.Getenv("PDF_RENDERER_REQUEST_POLL_INTERVAL")
-	if len(configRequestPollInterval) > 0 {
-		tmp, err := time.ParseDuration(configRequestPollInterval)
-		if err == nil {
-			requestPollInterval = tmp
-		}
-	}
-
-	return requestPollInterval
-}
-
-func printDeadline() time.Duration {
-	printDeadline, _ := time.ParseDuration(DEFAULT_PRINT_DEADLINE)
-	configPrintDeadline := os.Getenv("PDF_RENDERER_PRINT_DEADLINE_MINUTES")
-	if len(configPrintDeadline) > 0 {
-		tmp, err := time.ParseDuration(configPrintDeadline)
-		if err == nil {
-			printDeadline = tmp
-		}
-	}
-
-	return printDeadline
 }
 
 func listenForRequest(c chan *network.RequestWillBeSentReply, requestWillBeSentClient network.RequestWillBeSentClient) {
@@ -95,7 +61,7 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 	}
 }
 
-func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []byte, error) {
+func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, error) {
 	// Use the DevTools API to manage targets
 	devt := devtool.New("http://127.0.0.1:9222")
 	pt, err := devt.Get(ctx, devtool.Page)
@@ -141,7 +107,7 @@ func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []b
 	defer func() {
 		closeReply, err := baseBrowser.Target.CloseTarget(ctx, closeTargetArgs)
 		if err != nil || !closeReply.Success {
-			log.Error(fmt.Sprintf("Could not close target for: %v because: %v", request.TargetUrl, err))
+			log.Error(fmt.Sprintf("Could not close target for: %v because: %v", params.TargetUrl, err))
 		}
 	}()
 
@@ -166,8 +132,8 @@ func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []b
 	}
 
 	// Set custom headers
-	if request.Headers != nil {
-		headers, marshallErr := json.Marshal(request.Headers)
+	if params.Headers != nil {
+		headers, marshallErr := json.Marshal(params.Headers)
 		if marshallErr != nil {
 			return nil, nil, marshallErr
 		}
@@ -202,16 +168,16 @@ func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []b
 	go listenForResponse(responseReceivedChan, responseReceivedClient)
 
 	// Tell the page to navigate to the URL
-	navArgs := page.NewNavigateArgs(request.TargetUrl)
+	navArgs := page.NewNavigateArgs(params.TargetUrl)
 	c.Page.Navigate(ctx, navArgs)
 
 	// Wait for the page to finish loading
-	var responseSummaries []ResponseSummary
+	var responseSummaries []responseSummary
 	curAttempt := 0
 	pendingRequests := 0
-	requestPollRetries := requestPollRetries()
-	requestPollInterval := requestPollInterval()
-	printDeadline := printDeadline()
+	requestPollRetries := cfg.Config().RequestPollRetries()
+	requestPollInterval := cfg.Config().RequestPollInterval()
+	printDeadline := cfg.Config().PrintDeadline()
 	startTime := time.Now()
 	for time.Since(startTime) < printDeadline && curAttempt < requestPollRetries {
 		time.Sleep(requestPollInterval)
@@ -236,7 +202,7 @@ func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []b
 				}
 
 				if reply.Type.String() != "Document" {
-					summary := ResponseSummary{
+					summary := responseSummary{
 						Url: reply.Response.URL,
 						Status: reply.Response.Status,
 						StatusText: reply.Response.StatusText,
@@ -262,12 +228,12 @@ func CreatePdf(ctx context.Context, request web.GeneratePdfRequest) ([]byte, []b
 
 	// Print to PDF
 	printToPDFArgs := page.NewPrintToPDFArgs().
-		SetLandscape(request.Orientation == "Landscape").
-		SetPrintBackground(request.PrintBackground).
-		SetMarginTop(request.MarginTop).
-		SetMarginRight(request.MarginRight).
-		SetMarginBottom(request.MarginBottom).
-		SetMarginLeft(request.MarginLeft)
+		SetLandscape(params.Orientation == "Landscape").
+		SetPrintBackground(params.PrintBackground).
+		SetMarginTop(params.MarginTop).
+		SetMarginRight(params.MarginRight).
+		SetMarginBottom(params.MarginBottom).
+		SetMarginLeft(params.MarginLeft)
 	pdf, err := c.Page.PrintToPDF(ctx, printToPDFArgs)
 	if err != nil {
 		return nil, nil, err

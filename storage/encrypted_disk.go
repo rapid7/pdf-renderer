@@ -11,22 +11,11 @@ import (
 	"io"
 	"os"
 	"io/ioutil"
+	"github.com/rapid7/pdf-renderer/cfg"
 )
 
-const DEFAULT_KEYSTRING = "JKNV29t8yYEy21TO0UzvDsX2KgiWrOVy"
-
-func key() []byte {
-	key := []byte(DEFAULT_KEYSTRING)
-	configKey := os.Getenv("PDF_RENDERER_KEY")
-	if len(configKey) > 0 {
-		key = []byte(configKey)
-	}
-
-	return key
-}
-
 func decrypt(encryptedData []byte) []byte {
-	key := key()
+	key := cfg.Config().Key()
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -46,7 +35,7 @@ func decrypt(encryptedData []byte) []byte {
 }
 
 func encrypt(unencryptedData []byte) []byte {
-	key := key()
+	key := cfg.Config().Key()
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -64,32 +53,34 @@ func encrypt(unencryptedData []byte) []byte {
 	return encryptedData
 }
 
-func fileExists(fullFilePath string) bool {
-	_, err := os.Stat(fullFilePath)
-
-	return err == nil
-}
-
 type encryptedFile struct {
 	filePath string
 	fileName string
 }
 
-func (ed encryptedFile) FileName() string {
+func (ed *encryptedFile) FileName() string {
 	return ed.fileName
 }
 
-func (ed encryptedFile) Write(data []byte) error {
+func (ed *encryptedFile) Write(data []byte) error {
 	return ioutil.WriteFile(ed.filePath + ed.fileName, encrypt(data), os.ModePerm)
 }
 
-func (ed encryptedFile) Read() ([]byte, error) {
-	fullFilePath := ed.filePath + ed.fileName
-	if fileExists(fullFilePath) {
-		data, err := ioutil.ReadFile(fullFilePath)
+func (ed *encryptedFile) Read() ([]byte, error) {
+	if ed.Exists() {
+		data, err := ioutil.ReadFile(ed.filePath + ed.fileName)
+		if err != nil {
+			return nil, err
+		}
 
-		return decrypt(data), err
+		return decrypt(data), nil
 	} else {
 		return nil, nil
 	}
+}
+
+func (ed *encryptedFile) Exists() bool {
+	_, err := os.Stat(ed.filePath + ed.fileName)
+
+	return err == nil
 }

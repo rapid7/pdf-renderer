@@ -28,8 +28,12 @@ Description: when "true", outputs debug log messages and enables other debugging
 Default Value: (string) `JKNV29t8yYEy21TO0UzvDsX2KgiWrOVy`  
 Description: defines the key used to encrypt the files while at rest
 
+#### PDF_RENDERER_WEB_SERVER_PORT
+Default Value: (int) `9766`
+Description: the port that the web server will listen on
+
 #### PDF_RENDERER_STORAGE_STRATEGY
-Default Value: (string) `noop`  
+Default Value: (string) `memory`  
 Description: defines the strategy by which to store a copy of the generated files. Valid strategies:
 * noop: does nothing
 * disk: stores a copy of the encrypted file to disk, the file path can be configured via PDF_RENDERER_STORAGE_DIRECTORY
@@ -87,7 +91,22 @@ curl -X POST \
 }'
 ```
 
-The response is a zip file.
+The response is a zip file with the following contents:
+```
+<correlationId>.json
+<correlationId>.pdf
+```
+
+The json file structured as such:
+```
+[
+    {
+        "url": "http://example.com",
+        "status": "<status code>",
+        "statusText": "<status text>"
+    }
+]
+```
 
 ## Special Notes
 * Please be aware that the correlationId you provide is used to name the file that's temporarily stored onto the file system. This means that if the correlation id is a relative path, you could accidentally write to sections of the file system that you did not intend to write to.
@@ -99,3 +118,4 @@ The response is a zip file.
 * make the QoS more robust (request method, time to generate, etc)
 * blacklist for targetUrl values
 * enable/disable for various features
+* add a way to return only the json (correlation is problematic here)
