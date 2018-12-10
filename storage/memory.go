@@ -4,18 +4,25 @@
  **************************************************************************/
 package storage
 
-type noop struct {
+type memory struct {
 	fileName string
+	data []byte
 }
 
-func (n noop) FileName() string {
-	return n.fileName
+func (m *memory) FileName() string {
+	return m.fileName
 }
 
-func (n noop) Write(data []byte) error {
+func (m *memory) Write(data []byte) error {
+	m.data = append([]byte(nil), data...)
+
 	return nil
 }
 
-func (n noop) Read() ([]byte, error) {
-	return nil, nil
+func (m *memory) Read() ([]byte, error) {
+	return m.data, nil
+}
+
+func (m *memory) Exists() bool {
+	return m.data != nil
 }
