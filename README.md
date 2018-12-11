@@ -35,7 +35,7 @@ Description: the port that the web server will listen on
 #### PDF_RENDERER_STORAGE_STRATEGY
 Default Value: (string) `memory`  
 Description: defines the strategy by which to store a copy of the generated files. Valid strategies:
-* noop: does nothing
+* memory: the file remains in memory only
 * disk: stores a copy of the encrypted file to disk, the file path can be configured via PDF_RENDERER_STORAGE_DIRECTORY
 
 #### PDF_RENDERER_STORAGE_DIRECTORY
