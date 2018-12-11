@@ -104,7 +104,7 @@ The json file structured as such:
         "url": "http://example.com",
         "status": "<status code>",
         "statusText": "<status text>"
-    }
+    }, ...
 ]
 ```
 
