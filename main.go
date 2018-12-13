@@ -47,7 +47,8 @@ func bToMb(b uint64) float64 {
 }
 
 func main() {
-	web.PdfRendererWebServer{
+	ws := web.PdfRendererWebServer{
 		Port: cfg.Config().WebServerPort(),
-	}.Start()
+	}
+	ws.Start()
 }
