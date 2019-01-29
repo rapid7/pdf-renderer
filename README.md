@@ -77,7 +77,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"correlationId": "7667e2de-2f21-4ab7-9afb-402de2a6468f",
-	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip"
+	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip",
 	"targetUrl": "https://example.com",
 	"headers": {
 		"Cookie": "cookiename: cookievalue"
