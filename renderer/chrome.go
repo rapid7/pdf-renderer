@@ -63,18 +63,16 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 
 func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, error) {
 	// Use the DevTools API to manage targets
-	devt := devtool.New("http://127.0.0.1:9222")
-	pt, err := devt.Get(ctx, devtool.Page)
+	devt, err := devtool.New("http://127.0.0.1:9222").Version(ctx)
 	if err != nil {
-		pt, err = devt.Create(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
+		return nil, nil, err
 	}
-	defer devt.Close(ctx, pt)
+
+
+
 
 	// Open a new RPC connection to the Chrome Debugging Protocol target
-	conn, err := rpcc.DialContext(ctx, pt.WebSocketDebuggerURL)
+	conn, err := rpcc.DialContext(ctx, devt.WebSocketDebuggerURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -94,6 +92,7 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 	newContextTarget, err := baseBrowser.Target.CreateBrowserContext(ctx)
 	if err != nil {
 		return nil, nil, err
+		log.Printf("BBO")
 	}
 	defer baseBrowser.Target.DisposeBrowserContext(ctx, target.NewDisposeBrowserContextArgs(newContextTarget.BrowserContextID))
 
