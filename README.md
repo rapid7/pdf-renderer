@@ -56,7 +56,7 @@ Default Value: (int) `10`
 Description: defines the number of times to poll the browser for new network requests/responses when no requests are pending before assuming the page is done rendering
 
 #### PDF_RENDERER_S3_BUCKET 
-Default Value: (string) `PDF_RENDERER`
+Default Value: **NOT SET**  
 Description: defines the bucket in which the zip is stored if storage strategy is set to 's3'. Note: This must be a globally unique name.
 
 #### PDF_RENDERER_REQUEST_POLL_INTERVAL
