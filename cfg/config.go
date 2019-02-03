@@ -27,6 +27,7 @@ type config interface {
 	RequestPollRetries() int
 	RequestPollInterval() time.Duration
 	PrintDeadline() time.Duration
+	S3Bucket() string
 }
 
 var envCfg = envConfig{}

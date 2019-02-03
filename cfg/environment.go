@@ -5,6 +5,7 @@
 package cfg
 
 import (
+	"log"
 	"os"
 	"time"
 	"strconv"
@@ -120,4 +121,12 @@ func (c *envConfig) PrintDeadline() time.Duration {
 	}
 
 	return printDeadline
+}
+
+func (c *envConfig) S3Bucket() string {
+	if v := os.Getenv("PDF_RENDERER_S3_BUCKET"); len(v) != 0 {
+		return  v
+	}
+	log.Fatal("Environment variable PDF_RENDERER_S3_BUCKET must be set.")
+	return ""
 }
