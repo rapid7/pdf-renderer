@@ -82,7 +82,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"correlationId": "7667e2de-2f21-4ab7-9afb-402de2a6468f",
-	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip"
+	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip",
 	"targetUrl": "https://example.com",
 	"headers": {
 		"Cookie": "cookiename: cookievalue"
@@ -119,7 +119,6 @@ The json file structured as such:
 
 ## TODO
 * add support for other headless browsers
-* upload to s3
 * make the QoS more robust (request method, time to generate, etc)
 * blacklist for targetUrl values
 * enable/disable for various features
