@@ -6,8 +6,9 @@ package storage
 
 import (
 	"errors"
-	"github.com/rapid7/pdf-renderer/cfg"
 	"os"
+
+	"github.com/rapid7/pdf-renderer/cfg"
 )
 
 func init() {
@@ -23,20 +24,14 @@ type StoredFile interface {
 
 func NewStoredFile(fileName string) (StoredFile, error) {
 	switch storageStrategy := cfg.Config().StorageStrategy(); storageStrategy {
-	case "memory":
-		return &memory{
-			fileName: fileName,
-		}, nil
-	case "disk":
-		return &encryptedFile{
-			filePath: cfg.Config().StorageDirectory(),
-			fileName: fileName,
-		}, nil
 
+	case "memory":
+		return NewMemory(fileName), nil
+	case "disk":
+		return NewEncryptedFile(fileName), nil
 	case "s3":
 		return NewS3Object(fileName)
-
-	default :
+	default:
 		return nil, errors.New("illegal storage strategy")
 	}
 }

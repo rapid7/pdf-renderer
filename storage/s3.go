@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -12,26 +13,24 @@ import (
 )
 
 type s3Client struct {
-	client *s3.S3
-	uploader *s3manager.Uploader
+	client     *s3.S3
+	uploader   *s3manager.Uploader
 	downloader *s3manager.Downloader
-	bucket string
+	bucket     string
 }
-
-
 
 // Variables needed to enforce singleton pattern for S3Client
 var (
 	client *s3Client
-	err error
+	s3err  error
 )
 
 // singleton client
 func getS3Client() (*s3Client, error) {
 	if client == nil {
-		client, err = newS3Client()
-		if err != nil {
-			return nil, err
+		client, s3err = newS3Client()
+		if s3err != nil {
+			return nil, s3err
 		}
 	}
 	return client, nil
@@ -42,7 +41,6 @@ func newS3Client() (*s3Client, error) {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 	svc := s3.New(sess)
-
 
 	// Attempt to create bucket
 	bucketInput := &s3.CreateBucketInput{
@@ -74,13 +72,12 @@ func newS3Client() (*s3Client, error) {
 	d := s3manager.NewDownloader(sess)
 
 	return &s3Client{
-		client: svc,
-		uploader: u,
+		client:     svc,
+		uploader:   u,
 		downloader: d,
-		bucket: cfg.Config().S3Bucket(),
+		bucket:     cfg.Config().S3Bucket(),
 	}, nil
 }
-
 
 type s3Object struct {
 	fileName string
@@ -95,7 +92,7 @@ func NewS3Object(fileName string) (*s3Object, error) {
 
 	return &s3Object{
 		fileName: fileName,
-		s3client:client,
+		s3client: client,
 	}, nil
 
 }
@@ -126,7 +123,7 @@ func (o *s3Object) Read() ([]byte, error) {
 
 	downParams := &s3.GetObjectInput{
 		Bucket: aws.String(o.s3client.bucket),
-		Key: aws.String(o.FileName()),
+		Key:    aws.String(o.FileName()),
 	}
 
 	_, err := o.s3client.downloader.Download(buf, downParams)
@@ -161,8 +158,3 @@ func (o *s3Object) Exists() bool {
 	}
 	return true
 }
-
-
-
-
-

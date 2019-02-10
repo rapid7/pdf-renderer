@@ -6,7 +6,13 @@ package storage
 
 type memory struct {
 	fileName string
-	data []byte
+	data     []byte
+}
+
+func NewMemory(filename string) *memory {
+	return &memory{
+		fileName: filename,
+	}
 }
 
 func (m *memory) FileName() string {
