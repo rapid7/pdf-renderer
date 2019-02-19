@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -52,20 +54,16 @@ func newS3Client() (*s3Client, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeBucketAlreadyExists:
-				fmt.Printf("%s bucket already exits", cfg.Config().S3Bucket())
-				return nil, err
+				log.Errorf(fmt.Sprintf("%s bucket already exits", cfg.Config().S3Bucket()))
 			case s3.ErrCodeBucketAlreadyOwnedByYou:
-				fmt.Printf("%s bucket already created", cfg.Config().S3Bucket())
-
+				log.Errorf(fmt.Sprintf("%s bucket already created", cfg.Config().S3Bucket()))
 			default:
-				return nil, err
-				fmt.Println(aerr.Error())
+				log.Error(aerr.Error())
 			}
-
 		} else {
-			fmt.Println(err.Error())
-			return nil, aerr
+			log.Error(err.Error())
 		}
+		return nil, err
 	}
 
 	u := s3manager.NewUploader(sess)
@@ -147,14 +145,14 @@ func (o *s3Object) Exists() bool {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				fmt.Println(s3.ErrCodeNoSuchKey, aerr.Error())
-				return false
+				log.Errorf(fmt.Sprintf("%v error: the key '%v' does not exist", s3.ErrCodeNoSuchKey, o.FileName()))
 			default:
-				fmt.Println(aerr.Error())
+				log.Error(aerr.Error())
 			}
 		} else {
-			fmt.Println(err.Error())
+			log.Error(err.Error())
 		}
+		return false
 	}
 	return true
 }
