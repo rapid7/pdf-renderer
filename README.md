@@ -34,7 +34,7 @@ Description: the port that the web server will listen on
 
 #### PDF_RENDERER_STORAGE_STRATEGY
 Default Value: (string) `memory`  
-Description: defines the strategy by which to store a copy of the generated files. Valid strategies:
+Description: defines the strategy by which to store a copy of the generated files. Persisted files will be overwritten if the same filename is used. Valid strategies:
 * memory: the file remains in memory only
 * disk: stores a copy of the encrypted file to disk, the file path can be configured via PDF_RENDERER_STORAGE_DIRECTORY
 * s3: stores a copy of zip to s3, the bucket can be configured with environment variable PDF_RENDERER_S3_BUCKET. Must have a valid AWS credentials file in home dir (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)
@@ -118,8 +118,11 @@ The json file structured as such:
 * Please be cautious with the potential values for target url and the potential recipients of the response. If the value of the targetUrl is a sensitive url, sensitive data could be exposed. For example, setting it to 169.254.169.254 (aws meta-data service) could expose information that you might not want exposed.
 
 ## TODO
+* create a unique bucket for s3 tests and delete it afterwards (blocker for next release)
 * add support for other headless browsers
 * make the QoS more robust (request method, time to generate, etc)
 * blacklist for targetUrl values
 * enable/disable for various features
 * add a way to return only the json (correlation is problematic here)
+* use the ec2 metadata service to resolve the region
+
