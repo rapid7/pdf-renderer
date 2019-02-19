@@ -9,8 +9,9 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
-	"os"
 	"io/ioutil"
+	"os"
+
 	"github.com/rapid7/pdf-renderer/cfg"
 )
 
@@ -58,12 +59,19 @@ type encryptedFile struct {
 	fileName string
 }
 
+func NewEncryptedFile(fileName string) *encryptedFile {
+	return &encryptedFile{
+		filePath: cfg.Config().StorageDirectory(),
+		fileName: fileName,
+	}
+}
+
 func (ed *encryptedFile) FileName() string {
 	return ed.fileName
 }
 
 func (ed *encryptedFile) Write(data []byte) error {
-	return ioutil.WriteFile(ed.filePath + ed.fileName, encrypt(data), os.ModePerm)
+	return ioutil.WriteFile(ed.filePath+ed.fileName, encrypt(data), os.ModePerm)
 }
 
 func (ed *encryptedFile) Read() ([]byte, error) {

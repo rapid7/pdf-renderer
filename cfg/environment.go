@@ -6,9 +6,22 @@ package cfg
 
 import (
 	"os"
-	"time"
 	"strconv"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
+
+func init() {
+	// Ensure env var "PDF_RENDERER_S3_BUCKET" is set
+	strategy := Config().StorageStrategy()
+	if strategy == "s3" {
+		s := Config().S3Bucket()
+		if len(s) == 0 {
+			log.Fatal("Environment variable PDF_RENDERER_S3_BUCKET must be set.")
+		}
+	}
+}
 
 type envConfig struct {
 }
@@ -120,4 +133,11 @@ func (c *envConfig) PrintDeadline() time.Duration {
 	}
 
 	return printDeadline
+}
+
+func (c *envConfig) S3Bucket() string {
+	if v := os.Getenv("PDF_RENDERER_S3_BUCKET"); len(v) != 0 {
+		return v
+	}
+	return ""
 }

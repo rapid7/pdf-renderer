@@ -37,6 +37,7 @@ Default Value: (string) `memory`
 Description: defines the strategy by which to store a copy of the generated files. Valid strategies:
 * memory: the file remains in memory only
 * disk: stores a copy of the encrypted file to disk, the file path can be configured via PDF_RENDERER_STORAGE_DIRECTORY
+* s3: stores a copy of zip to s3, the bucket can be configured with environment variable PDF_RENDERER_S3_BUCKET. Must have a valid AWS credentials file in home dir (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)
 
 #### PDF_RENDERER_STORAGE_DIRECTORY
 Default Value: (string) `/tmp/pdf-renderer/`  
@@ -53,6 +54,10 @@ Description: defines the minimum age at which a temporarily stored correlation f
 #### PDF_RENDERER_REQUEST_POLL_RETRIES
 Default Value: (int) `10`  
 Description: defines the number of times to poll the browser for new network requests/responses when no requests are pending before assuming the page is done rendering
+
+#### PDF_RENDERER_S3_BUCKET 
+Default Value: **NOT SET**  
+Description: defines the bucket in which the zip is stored if storage strategy is set to 's3'. Note: This must be a globally unique name.
 
 #### PDF_RENDERER_REQUEST_POLL_INTERVAL
 Default Value: (time.Duration) `1s`  
@@ -77,7 +82,7 @@ curl -X POST \
   -H 'Content-Type: application/json' \
   -d '{
 	"correlationId": "7667e2de-2f21-4ab7-9afb-402de2a6468f",
-	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip"
+	"fileName": "7667e2de-2f21-4ab7-9afb-402de2a6468f.zip",
 	"targetUrl": "https://example.com",
 	"headers": {
 		"Cookie": "cookiename: cookievalue"
@@ -114,7 +119,6 @@ The json file structured as such:
 
 ## TODO
 * add support for other headless browsers
-* upload to s3
 * make the QoS more robust (request method, time to generate, etc)
 * blacklist for targetUrl values
 * enable/disable for various features

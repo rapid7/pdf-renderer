@@ -5,40 +5,41 @@
 package renderer
 
 import (
-	"github.com/mafredri/cdp/devtool"
-	"github.com/mafredri/cdp/rpcc"
-	"github.com/mafredri/cdp"
-	"github.com/mafredri/cdp/protocol/network"
-	"github.com/mafredri/cdp/protocol/page"
 	"context"
 	"encoding/json"
-	"github.com/mafredri/cdp/protocol/target"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/mafredri/cdp"
+	"github.com/mafredri/cdp/devtool"
+	"github.com/mafredri/cdp/protocol/network"
+	"github.com/mafredri/cdp/protocol/page"
+	"github.com/mafredri/cdp/protocol/target"
+	"github.com/mafredri/cdp/rpcc"
 	"github.com/mafredri/cdp/session"
 	"github.com/rapid7/pdf-renderer/cfg"
+	log "github.com/sirupsen/logrus"
 )
 
 type ChromeParameters struct {
-	TargetUrl string
-	Headers map[string]string
-	Orientation string
+	TargetUrl       string
+	Headers         map[string]string
+	Orientation     string
 	PrintBackground bool
-	MarginTop float64
-	MarginRight float64
-	MarginBottom float64
-	MarginLeft float64
+	MarginTop       float64
+	MarginRight     float64
+	MarginBottom    float64
+	MarginLeft      float64
 }
 
 type responseSummary struct {
-	Url string `json:"url"`
-	Status int `json:"status"`
+	Url        string `json:"url"`
+	Status     int    `json:"status"`
 	StatusText string `json:"statusText"`
 }
 
 func listenForRequest(c chan *network.RequestWillBeSentReply, requestWillBeSentClient network.RequestWillBeSentClient) {
-	defer func() {recover()}()
+	defer func() { recover() }()
 
 	for {
 		reply, _ := requestWillBeSentClient.Recv()
@@ -50,7 +51,7 @@ func listenForRequest(c chan *network.RequestWillBeSentReply, requestWillBeSentC
 }
 
 func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedClient network.ResponseReceivedClient) {
-	defer func() {recover()}()
+	defer func() { recover() }()
 
 	for {
 		reply, _ := responseReceivedClient.Recv()
@@ -63,18 +64,13 @@ func listenForResponse(c chan *network.ResponseReceivedReply, responseReceivedCl
 
 func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, error) {
 	// Use the DevTools API to manage targets
-	devt := devtool.New("http://127.0.0.1:9222")
-	pt, err := devt.Get(ctx, devtool.Page)
+	devt, err := devtool.New("http://127.0.0.1:9222").Version(ctx)
 	if err != nil {
-		pt, err = devt.Create(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
+		return nil, nil, err
 	}
-	defer devt.Close(ctx, pt)
 
 	// Open a new RPC connection to the Chrome Debugging Protocol target
-	conn, err := rpcc.DialContext(ctx, pt.WebSocketDebuggerURL)
+	conn, err := rpcc.DialContext(ctx, devt.WebSocketDebuggerURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -182,7 +178,7 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 	for time.Since(startTime) < printDeadline && curAttempt < requestPollRetries {
 		time.Sleep(requestPollInterval)
 
-		ConsumeChannels:
+	ConsumeChannels:
 		for {
 			select {
 			case reply := <-requestWillBeSentChan:
@@ -203,8 +199,8 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 
 				if reply.Type.String() != "Document" {
 					summary := responseSummary{
-						Url: reply.Response.URL,
-						Status: reply.Response.Status,
+						Url:        reply.Response.URL,
+						Status:     reply.Response.Status,
 						StatusText: reply.Response.StatusText,
 					}
 					responseSummaries = append(responseSummaries, summary)
