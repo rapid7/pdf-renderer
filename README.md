@@ -131,6 +131,7 @@ The json file structured as such:
 ## Special Notes
 * Please be aware that the correlationId you provide is used to name the file that's temporarily stored onto the file system. This means that if the correlation id is a relative path, you could accidentally write to sections of the file system that you did not intend to write to.
 * Please be cautious with the potential values for target url and the potential recipients of the response. If the value of the targetUrl is a sensitive url, sensitive data could be exposed. For example, setting it to 169.254.169.254 (aws meta-data service) could expose information that you might not want exposed.
+* Please be aware that the files uploaded to the S3 bucket will not be encrypted. This is because S3 buckets support SSE (server side encryption). Please enable it to improve the safety of your files.
 
 ## TODO
 * add support for other headless browsers
