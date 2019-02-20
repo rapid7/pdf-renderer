@@ -1,5 +1,6 @@
 pdf-renderer.iml
 debug
 pdf-renderer
+pdf-renderer_darwin_amd64
 pdf-renderer_linux_amd64
 .idea

@@ -2,6 +2,7 @@ module github.com/rapid7/pdf-renderer
 
 require (
 	github.com/aws/aws-sdk-go v1.16.26
+	github.com/google/uuid v1.1.0
 	github.com/gorilla/mux v1.7.0
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/mafredri/cdp v0.21.0

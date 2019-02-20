@@ -22,6 +22,15 @@ func init() {
 		log.SetLevel(log.DebugLevel)
 		go periodicallyLogMemUsage()
 	}
+
+	// Ensure env var "PDF_RENDERER_S3_BUCKET" is set
+	strategy := cfg.Config().StorageStrategy()
+	if strategy == "s3" {
+		s := cfg.Config().S3Bucket()
+		if len(s) == 0 {
+			log.Fatal("Environment variable PDF_RENDERER_S3_BUCKET must be set.")
+		}
+	}
 }
 
 func periodicallyLogMemUsage() {

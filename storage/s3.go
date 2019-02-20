@@ -24,57 +24,33 @@ type s3Client struct {
 // Variables needed to enforce singleton pattern for S3Client
 var (
 	client *s3Client
-	s3err  error
 )
 
 // singleton client
-func getS3Client() (*s3Client, error) {
+func getS3Client() (*s3Client) {
 	if client == nil {
-		client, s3err = newS3Client()
-		if s3err != nil {
-			return nil, s3err
-		}
+		sess := session.Must(session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		}))
+
+		newS3Client(sess, cfg.Config().S3Bucket())
 	}
-	return client, nil
+
+	return client
 }
 
-func newS3Client() (*s3Client, error) {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+func newS3Client(sess *session.Session, bucket string) {
 	svc := s3.New(sess)
-
-	// Attempt to create bucket
-	bucketInput := &s3.CreateBucketInput{
-		Bucket: aws.String(cfg.Config().S3Bucket()),
-	}
-
-	_, err := svc.CreateBucket(bucketInput)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case s3.ErrCodeBucketAlreadyExists:
-				log.Errorf(fmt.Sprintf("%s bucket already exits", cfg.Config().S3Bucket()))
-			case s3.ErrCodeBucketAlreadyOwnedByYou:
-				log.Errorf(fmt.Sprintf("%s bucket already created", cfg.Config().S3Bucket()))
-			default:
-				log.Error(aerr.Error())
-			}
-		} else {
-			log.Error(err.Error())
-		}
-		return nil, err
-	}
 
 	u := s3manager.NewUploader(sess)
 	d := s3manager.NewDownloader(sess)
 
-	return &s3Client{
+	client = &s3Client{
 		client:     svc,
 		uploader:   u,
 		downloader: d,
-		bucket:     cfg.Config().S3Bucket(),
-	}, nil
+		bucket:     bucket,
+	}
 }
 
 type s3Object struct {
@@ -83,10 +59,7 @@ type s3Object struct {
 }
 
 func NewS3Object(fileName string) (*s3Object, error) {
-	client, err := getS3Client()
-	if err != nil {
-		return nil, err
-	}
+	client := getS3Client()
 
 	return &s3Object{
 		fileName: fileName,
@@ -100,7 +73,6 @@ func (o *s3Object) FileName() string {
 }
 
 func (o *s3Object) Write(data []byte) error {
-
 	upParams := &s3manager.UploadInput{
 		Bucket: aws.String(o.s3client.bucket),
 		Key:    aws.String(o.FileName()),
