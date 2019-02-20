@@ -1,5 +1,4 @@
 # PDF-RENDERER
-
 This service runs in conjunction with a headless chrome browser. It listens for requests on port 9766. Upon receiving a render request, it will go to a URL, render the page and respond with a zip file. The zip file will contain a json file and a pdf file. The json file will be a list of network requests made by the page that was rendered. The pdf file will be a print-out of the page. 
 
 ## Features:
@@ -57,7 +56,7 @@ Description: defines the number of times to poll the browser for new network req
 
 #### PDF_RENDERER_S3_BUCKET 
 Default Value: **NOT SET**  
-Description: defines the bucket in which the zip is stored if storage strategy is set to 's3'. Note: This must be a globally unique name.
+Description: defines the bucket in which the zip is stored if storage strategy is set to 's3'. To be non-invasive, this service will not create the bucket for you.
 
 #### PDF_RENDERER_REQUEST_POLL_INTERVAL
 Default Value: (time.Duration) `1s`  
@@ -68,6 +67,22 @@ Default Value: (time.Duration) `5m`
 Description: defines the maximum amount of time to spend on any given render request before simply printing whatever is there 
 
 ## Usage
+
+#### Getting Started
+Please be advised that running make will also run the unit tests. The unit tests require an AWS account with credentials and config in order to test the s3 storage strategy. Please refer to https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html in order to properly configure your environment.
+
+With unit tests:
+```
+make run
+```
+
+Without unit tests:
+```
+go build
+./pdf-renderer
+```
+
+#### Example request:
 ```
 cd $GOPATH
 go get github.com/rapid7/pdf-renderer
@@ -118,11 +133,10 @@ The json file structured as such:
 * Please be cautious with the potential values for target url and the potential recipients of the response. If the value of the targetUrl is a sensitive url, sensitive data could be exposed. For example, setting it to 169.254.169.254 (aws meta-data service) could expose information that you might not want exposed.
 
 ## TODO
-* create a unique bucket for s3 tests and delete it afterwards (blocker for next release)
 * add support for other headless browsers
 * make the QoS more robust (request method, time to generate, etc)
 * blacklist for targetUrl values
 * enable/disable for various features
 * add a way to return only the json (correlation is problematic here)
 * use the ec2 metadata service to resolve the region
-
+* make it so the unit tests don't require you to have an aws account (skip aws tests if not configured?)

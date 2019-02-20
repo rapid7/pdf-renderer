@@ -8,20 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
-
-func init() {
-	// Ensure env var "PDF_RENDERER_S3_BUCKET" is set
-	strategy := Config().StorageStrategy()
-	if strategy == "s3" {
-		s := Config().S3Bucket()
-		if len(s) == 0 {
-			log.Fatal("Environment variable PDF_RENDERER_S3_BUCKET must be set.")
-		}
-	}
-}
 
 type envConfig struct {
 }
