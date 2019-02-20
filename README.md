@@ -82,7 +82,7 @@ go build
 ./pdf-renderer
 ```
 
-#### Example request:
+Without cloning:
 ```
 cd $GOPATH
 go get github.com/rapid7/pdf-renderer
@@ -91,6 +91,7 @@ go build
 ./pdf-renderer
 ```
 
+#### Example request:
 ```
 curl -X POST \
   http://localhost:9766/render \
