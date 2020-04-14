@@ -87,7 +87,7 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 	defer sessionManager.Close()
 
 	// Basically create an incognito window
-	newContextTarget, err := baseBrowser.Target.CreateBrowserContext(ctx)
+	newContextTarget, err := baseBrowser.Target.CreateBrowserContext(ctx, target.NewCreateBrowserContextArgs())
 	if err != nil {
 		return nil, nil, err
 	}

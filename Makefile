@@ -16,7 +16,7 @@ clean:
 	rm -f $(BINARY_LINUX)
 
 run:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	$(GOBUILD) -o $(BINARY_NAME) -v
 	./$(BINARY_NAME)
 
 build-darwin:

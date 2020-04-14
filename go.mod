@@ -1,12 +1,12 @@
 module github.com/rapid7/pdf-renderer
 
+go 1.14
+
 require (
-	github.com/aws/aws-sdk-go v1.16.26
-	github.com/google/uuid v1.1.0
-	github.com/gorilla/mux v1.7.0
-	github.com/gorilla/websocket v1.4.0 // indirect
-	github.com/mafredri/cdp v0.21.0
-	github.com/sirupsen/logrus v1.3.0
-	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3 // indirect
+	github.com/aws/aws-sdk-go v1.30.7
+	github.com/google/uuid v1.1.1
+	github.com/gorilla/mux v1.7.4
+	github.com/mafredri/cdp v0.28.0
+	github.com/sirupsen/logrus v1.5.0
 	golang.org/x/text v0.3.0 // indirect
 )
