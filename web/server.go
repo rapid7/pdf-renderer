@@ -93,6 +93,7 @@ func (ws *PdfRendererWebServer) render(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	defer r.Body.Close()
 
 	if len(form.FileName) == 0 {
 		form.FileName = form.CorrelationId + ".zip"
