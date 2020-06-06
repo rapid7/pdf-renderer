@@ -6,6 +6,7 @@ package web
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/rapid7/pdf-renderer/cfg"
 	"net/http"
 	"encoding/json"
 	"fmt"
@@ -106,9 +107,12 @@ func (ws *PdfRendererWebServer) render(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Info(fmt.Sprintf("Rendering: %v", form.TargetUrl))
 
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Config().PrintDeadline())
+		defer cancel()
+
 		startTime := time.Now()
 		summaries, pdf, pdfErr := renderer.CreatePdf(
-			context.Background(),
+			ctx,
 			renderer.ChromeParameters{
 				TargetUrl: form.TargetUrl,
 				Orientation: form.Orientation,
