@@ -139,6 +139,10 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 		if err != nil {
 			return nil, nil, err
 		}
+
+		for headerName, headerValue := range params.Headers {
+			log.Info(fmt.Sprintf("Added custom header: %v = %v", headerName, headerValue))
+		}
 	}
 
 	// Enable events

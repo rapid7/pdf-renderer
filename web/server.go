@@ -115,6 +115,7 @@ func (ws *PdfRendererWebServer) render(w http.ResponseWriter, r *http.Request) {
 			ctx,
 			renderer.ChromeParameters{
 				TargetUrl: form.TargetUrl,
+				Headers: form.Headers,
 				Orientation: form.Orientation,
 				PrintBackground: form.PrintBackground,
 				MarginTop: form.MarginTop,
