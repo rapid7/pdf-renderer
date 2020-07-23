@@ -158,10 +158,10 @@ func CreatePdf(ctx context.Context, params ChromeParameters) ([]byte, []byte, er
 	responseReceivedClient, _ := c.Network.ResponseReceived(ctx)
 	defer responseReceivedClient.Close()
 
-	requestWillBeSentChan := make(chan *network.RequestWillBeSentReply, 64)
+	requestWillBeSentChan := make(chan *network.RequestWillBeSentReply, 1024)
 	defer close(requestWillBeSentChan)
 
-	responseReceivedChan := make(chan *network.ResponseReceivedReply, 64)
+	responseReceivedChan := make(chan *network.ResponseReceivedReply, 1024)
 	defer close(responseReceivedChan)
 
 	go listenForRequest(requestWillBeSentChan, requestWillBeSentClient)
