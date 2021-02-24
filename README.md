@@ -64,7 +64,11 @@ Description: defines the amount of time between each poll for new network reques
 
 #### PDF_RENDERER_PRINT_DEADLINE
 Default Value: (time.Duration) `5m`  
-Description: defines the maximum amount of time to spend on any given render request before simply printing whatever is there 
+Description: defines the maximum amount of time to spend on any given render request before simply printing whatever is there
+
+#### PDF_RENDERER_BROWSER_CONTEXT_DEADLINE
+Default Value: (time.Duration) `6m`  
+Description: defines the maximum amount of time to give the browser to create the pdf and close the context (should be greater than the print deadline)
 
 ## Usage
 

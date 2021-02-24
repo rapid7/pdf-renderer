@@ -111,7 +111,7 @@ func (c *envConfig) RequestPollInterval() time.Duration {
 
 func (c *envConfig) PrintDeadline() time.Duration {
 	printDeadline, _ := time.ParseDuration(defaultPrintDeadline)
-	configPrintDeadline := os.Getenv("PDF_RENDERER_PRINT_DEADLINE_MINUTES")
+	configPrintDeadline := os.Getenv("PDF_RENDERER_PRINT_DEADLINE")
 	if len(configPrintDeadline) > 0 {
 		tmp, err := time.ParseDuration(configPrintDeadline)
 		if err == nil {
@@ -120,6 +120,19 @@ func (c *envConfig) PrintDeadline() time.Duration {
 	}
 
 	return printDeadline
+}
+
+func (c *envConfig) BrowserContextDeadline() time.Duration {
+	browserContextDeadline, _ := time.ParseDuration(defaultBrowserContextDeadline)
+	configBrowserContextDeadline := os.Getenv("PDF_RENDERER_BROWSER_CONTEXT_DEADLINE")
+	if len(configBrowserContextDeadline) > 0 {
+		tmp, err := time.ParseDuration(configBrowserContextDeadline)
+		if err == nil {
+			browserContextDeadline = tmp
+		}
+	}
+
+	return browserContextDeadline
 }
 
 func (c *envConfig) S3Bucket() string {

@@ -15,6 +15,7 @@ const defaultCorrelationRetentionDuration = "1h"
 const defaultRequestPollRetries = 10
 const defaultRequestPollInterval = "1s"
 const defaultPrintDeadline = "5m"
+const defaultBrowserContextDeadline = "6m"
 
 type config interface {
 	Debug() bool
@@ -27,6 +28,7 @@ type config interface {
 	RequestPollRetries() int
 	RequestPollInterval() time.Duration
 	PrintDeadline() time.Duration
+	BrowserContextDeadline() time.Duration
 	S3Bucket() string
 }
 
