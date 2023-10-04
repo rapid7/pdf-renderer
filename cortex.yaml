@@ -1,0 +1,17 @@
+---
+info:
+  title: Pdf Renderer
+  description: Golang based app that will render an html page and create a pdf.
+  x-cortex-git:
+    github:
+      alias: r7org
+      repository: rapid7/pdf-renderer
+  x-cortex-tag: pdf-renderer
+  x-cortex-type: service
+  x-cortex-group:
+  - status:deprecated
+  x-cortex-domain-parents:
+  - tag: vm-platform-shared
+openapi: 3.0.1
+servers:
+- url: "/"
