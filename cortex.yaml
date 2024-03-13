@@ -11,7 +11,7 @@ info:
   x-cortex-group:
   - status:deprecated
   x-cortex-domain-parents:
-  - tag: vm-platform-shared
+  - tag: vm-reporting
 openapi: 3.0.1
 servers:
 - url: "/"
