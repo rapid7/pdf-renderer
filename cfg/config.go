@@ -14,8 +14,8 @@ const defaultCorrelationStorageDirectory = "/tmp/pdf-renderer-correlation/"
 const defaultCorrelationRetentionDuration = "1h"
 const defaultRequestPollRetries = 10
 const defaultRequestPollInterval = "1s"
-const defaultPrintDeadline = "5m"
-const defaultBrowserContextDeadline = "6m"
+const defaultPrintDeadline = "10m"
+const defaultBrowserContextDeadline = "10m"
 
 type config interface {
 	Debug() bool
