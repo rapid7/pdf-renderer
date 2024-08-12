@@ -10,6 +10,7 @@ info:
   x-cortex-type: service
   x-cortex-group:
   - status:deprecated
+  - target:stemcell
   x-cortex-domain-parents:
   - tag: vm-reporting
 openapi: 3.0.1
