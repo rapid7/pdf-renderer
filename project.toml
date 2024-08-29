@@ -1,0 +1,16 @@
+[project]
+name = "pdf-renderer"
+
+[build]
+builder = "docker.artifacts.corp.rapid7.com/r7buildpacks/amazonlinux2023/builder:base"
+
+[[build.buildpacks]]
+uri = "docker.artifacts.corp.rapid7.com/r7buildpacks/multiarch/r7buildpacks-go:latest"
+
+[[build.buildpacks]]
+id = "inline/add-cloud-executor-binary-to-workspace"
+
+[build.buildpacks.script]
+api = "0.8"
+inline = "ln -s /layers/paketo-buildpacks_go-build/targets/bin/cloud-executor /workspace/cloud-executor"
+# This allows you to run: docker run -it --rm --entrypoint "./cloud-executor" cloud-executor
