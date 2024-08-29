@@ -3,7 +3,7 @@ containerReleasePipeline(
     name: 'go',
     arch: 'amd64',
     defaultContainer: 'go',
-    goVersion: '1.20',
+    goVersion: '1.14',
   ],
   ecrPushParams: [
     staging: [
