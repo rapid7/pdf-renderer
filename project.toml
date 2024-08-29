@@ -1,0 +1,8 @@
+[project]
+name = "pdf-renderer"
+
+[build]
+builder = "docker.artifacts.corp.rapid7.com/r7buildpacks/amazonlinux2023/builder:base"
+
+[[build.buildpacks]]
+uri = "docker.artifacts.corp.rapid7.com/r7buildpacks/multiarch/r7buildpacks-go:latest"
