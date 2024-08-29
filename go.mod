@@ -8,5 +8,4 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/mafredri/cdp v0.28.0
 	github.com/sirupsen/logrus v1.5.0
-	golang.org/x/text v0.3.0 // indirect
 )
